@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.opus'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral ()
+}
+
+dependencies {
+    // Spring Boot Web starter for REST APIs
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // For testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // PostgreSQL driver
+    implementation 'org.postgresql:postgresql:42.6.0'
+
+    // Lombok — auto-generates getters, setters, constructors, etc.
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+
+    // Spring Data JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Optional: for environment variable support via YAML
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+}
+
+tasks.named('test'){
+    useJUnitPlatform()
+}
