@@ -3,17 +3,29 @@ package com.opus.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.opus.dto.LoginRequest;
+import com.opus.dto.LoginResponse;
 import com.opus.dto.SignUpRequest;
+import com.opus.exception.InvalidCredentialsException;
 import com.opus.exception.UserAlreadyExistsException;
+import com.opus.exception.UserNotFoundException;
 import com.opus.model.User;
 import com.opus.repository.UserRepository;
+import com.opus.util.JWTUtil;
 import com.opus.util.PasswordUtil;
 
 @Service
 public class UserService
 {
-	@Autowired
 	private UserRepository userRepository;
+	private JWTUtil jwtUtil;
+	@Autowired
+	public UserService(UserRepository userRepository, JWTUtil jwtUtil)
+	{
+		this.userRepository = userRepository;
+		this.jwtUtil = jwtUtil;
+	}
+
 
 	public void signupUser(SignUpRequest signUpRequest)
 	{
@@ -41,5 +53,23 @@ public class UserService
 		userRepository.save(user);
 	}
 
+	public LoginResponse loginUser(LoginRequest loginRequest)
+	{
+		//find the user
+		User user = userRepository.findByUsername(loginRequest.getUsernameOrEmail())
+			.or(() -> userRepository.findByEmail(loginRequest.getUsernameOrEmail()))
+			.orElseThrow(() -> new UserNotFoundException("User Not Found !"));
 
+		//verify password
+		String hashedPassword = PasswordUtil.hashPassword(loginRequest.getPassword(), user.getPasswordSalt());
+		if (!hashedPassword.equals(user.getPasswordHash()))
+		{
+			throw new InvalidCredentialsException("Invalid credentials");
+		}
+
+		//generate token
+		String token = jwtUtil.generateToken(user.getUserId());
+
+		return LoginResponse.builder().username(user.getUsername()).token(token).build();
+	}
 }
