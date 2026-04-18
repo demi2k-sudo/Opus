@@ -40,7 +40,10 @@ src/main/java/com/opus/
 ├── OpusMain.java                  # Application entry point
 ├── controller/
 │   ├── UserController.java        # /api/users endpoints
-│   └── ZoneController.java        # /api/zones endpoints
+│   ├── ZoneController.java        # /api/zones endpoints
+│   ├── TaskController.java        # /api/zones/{zoneId}/tasks endpoints
+│   ├── TaskSettingsController.java
+│   └── TaskAttributeDefaultsController.java
 ├── dto/                           # Request / Response objects
 │   ├── SignUpRequest.java
 │   ├── LoginRequest.java
@@ -48,18 +51,31 @@ src/main/java/com/opus/
 │   ├── UserDetailsResponse.java
 │   ├── CreateZoneRequest.java
 │   ├── UpdateZoneRequest.java
-│   └── ZoneResponse.java
+│   ├── ZoneResponse.java
+│   ├── CreateTaskRequest.java
+│   ├── UpdateTaskRequest.java
+│   ├── TaskResponse.java
+│   ├── TaskAttributeRequest.java
+│   └── TaskAttributeResponse.java
 ├── model/                         # JPA Entities
 │   ├── User.java
 │   ├── Zone.java
-│   └── UserZoneMap.java
+│   ├── UserZoneMap.java
+│   ├── Task.java
+│   ├── TaskPriority.java
+│   ├── TaskType.java
+│   └── TaskStatus.java
 ├── repository/                    # Spring Data JPA Repositories
 │   ├── UserRepository.java
 │   ├── ZoneRepository.java
-│   └── UserZoneMapRepository.java
+│   ├── UserZoneMapRepository.java
+│   ├── TaskRepository.java
+│   └── TaskStatusRepository.java
 ├── service/                       # Business logic
 │   ├── UserService.java
-│   └── ZoneService.java
+│   ├── ZoneService.java
+│   ├── TaskService.java
+│   └── TaskSettingsService.java
 ├── security/                      # Auth & filter chain
 │   ├── SecurityConfig.java
 │   └── JwtAuthenticationFilter.java
@@ -147,13 +163,29 @@ Client (Bruno / Frontend)
                                        │ PK  zone_id   BIGSERIAL       │
                                        │     zone_name VARCHAR(100)    │
                                        │     zone_type VARCHAR(10)     │
-                                       │               (DESK|BOARD)   │
+                                       │     zone_code VARCHAR(10) UQ  │
                                        │     zone_hash VARCHAR(32) UQ  │
                                        │     user_id   BIGINT          │  ← creator ref
                                        │     metadata  JSONB           │
                                        │     created_at TIMESTAMP      │
                                        │     updated_at TIMESTAMP      │
-                                       └──────────────────────────────┘
+                                       └──────────────┬───────────────┘
+                                                      │
+                                                      │ FK
+                                                      ▼
+┌──────────────────────────┐          ┌──────────────────────────────┐
+│  task_priority/type/stat │          │         task_table           │
+│──────────────────────────│          │──────────────────────────────│
+│ PK  *_id      BIGSERIAL  │◄────────┤ PK  task_id   BIGSERIAL      │
+│ FK  zone_id   BIGINT     │          │ UQ  task_key  VARCHAR(30)    │
+│     ...                  │          │ FK  zone_id   BIGINT         │
+│     metadata  JSONB      │          │ FK  status_id BIGINT         │
+└──────────────────────────┘          │ FK  priority_id BIGINT       │
+                                      │ FK  type_id   BIGINT         │
+                                      │ FK  created_by BIGINT        │
+                                      │ FK  assigned_to BIGINT       │
+                                      │     ...                      │
+                                      └──────────────────────────────┘
 ```
 
 ### Tables
@@ -176,6 +208,7 @@ Client (Bruno / Frontend)
 | `zone_id` | BIGSERIAL | PK | Auto-incremented zone ID |
 | `zone_name` | VARCHAR(100) | NOT NULL | Human-readable name |
 | `zone_type` | VARCHAR(10) | NOT NULL | Enum: `DESK` or `BOARD` |
+| `zone_code` | VARCHAR(10) | UNIQUE, NOT NULL | Short code (e.g., ZNE) |
 | `zone_hash` | VARCHAR(32) | UNIQUE | UUID-based public identifier |
 | `user_id` | BIGINT | NOT NULL | Creator's user ID |
 | `metadata` | JSONB | | Extensible key-value store |
@@ -192,6 +225,56 @@ Client (Bruno / Frontend)
 | `joined_at` | TIMESTAMP | NOT NULL | Set on insert |
 | `metadata` | JSONB | | Extensible key-value store |
 | | | UQ(`user_id`, `zone_id`) | A user can only be in a zone once |
+
+#### `task_table`
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `task_id` | BIGSERIAL | PK | Auto-incremented task ID |
+| `task_key` | VARCHAR(30) | UNIQUE, NOT NULL | Zone prefix + sequence (e.g., ZNE-1) |
+| `zone_id` | BIGINT | NOT NULL, FK | Reference to `zone_table` |
+| `title` | VARCHAR(200) | NOT NULL | Task title |
+| `description` | TEXT | | Task description |
+| `status_id` | BIGINT | NOT NULL, FK | Reference to `task_status_table` |
+| `priority_id` | BIGINT | NOT NULL, FK | Reference to `task_priority_table` |
+| `type_id` | BIGINT | NOT NULL, FK | Reference to `task_type_table` |
+| `created_by` | BIGINT | NOT NULL, FK | Reference to `user_table` |
+| `assigned_to` | BIGINT | FK | Reference to `user_table` |
+| `estimated_minutes` | INTEGER | | Time estimation |
+| `metadata` | JSONB | | Custom task fields |
+| `deleted_at` | TIMESTAMP | | Soft delete timestamp |
+
+#### `task_priority_table`
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `priority_id` | BIGSERIAL | PK | Auto-incremented ID |
+| `zone_id` | BIGINT | NOT NULL, FK | Reference to `zone_table` |
+| `priority_name` | VARCHAR(20) | NOT NULL | e.g. HIGH, LOW |
+| `rank` | INTEGER | NOT NULL | Sorting rank |
+| `color` | VARCHAR(20) | | Hex or color name |
+| `metadata` | JSONB | | Custom fields |
+
+#### `task_type_table`
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `type_id` | BIGSERIAL | PK | Auto-incremented ID |
+| `zone_id` | BIGINT | NOT NULL, FK | Reference to `zone_table` |
+| `type_name` | VARCHAR(30) | NOT NULL | e.g. BUG, TASK |
+| `icon` | VARCHAR(30) | | UI Icon |
+| `metadata` | JSONB | | Custom fields |
+
+#### `task_status_table`
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `status_id` | BIGSERIAL | PK | Auto-incremented ID |
+| `zone_id` | BIGINT | NOT NULL, FK | Reference to `zone_table` |
+| `status_name` | VARCHAR(50) | NOT NULL | e.g. IN PROGRESS |
+| `display_order` | INTEGER | NOT NULL | Board ordering |
+| `color` | VARCHAR(20) | | Hex or color name |
+| `is_initial` | BOOLEAN | NOT NULL | Default on creation |
+| `is_final` | BOOLEAN | NOT NULL | Is task closed? |
+| `metadata` | JSONB | | Custom fields |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `updated_at` | TIMESTAMP | | |
 
 ---
 
@@ -290,6 +373,29 @@ Client (Bruno / Frontend)
 // Response: 200 OK
 "Zone deleted successfully"
 ```
+
+---
+
+### Task Endpoints — `/api/zones/{zoneId}/tasks`
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/zones/{zoneId}/tasks` | ✅ | Create a new task |
+| `GET` | `/api/zones/{zoneId}/tasks` | ✅ | Get all tasks for a zone |
+| `GET` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Get task by key (e.g., ZNE-1) |
+| `PUT` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Update a task |
+| `PUT` | `/api/zones/{zoneId}/tasks/{taskKey}/assign` | ✅ | Assign a task |
+| `DELETE` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Soft delete a task |
+
+### Task Settings Endpoints — `/api/zones/{zoneId}/settings`
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/zones/{zoneId}/settings/attributes` | ✅ | Get all priorities, types, statuses |
+| `POST` | `/api/zones/{zoneId}/settings/priorities` | ✅ | Create a custom priority |
+| `POST` | `/api/zones/{zoneId}/settings/types` | ✅ | Create a custom type |
+| `POST` | `/api/zones/{zoneId}/settings/statuses` | ✅ | Create a custom status |
+| `GET` | `/api/tasks/attributes/defaults` | ✅ | Get unpersisted default suggestions |
 
 ---
 
