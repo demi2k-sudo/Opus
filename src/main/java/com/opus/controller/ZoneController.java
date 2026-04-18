@@ -7,7 +7,7 @@ import com.opus.model.User;
 import com.opus.service.ZoneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,42 +25,34 @@ public class ZoneController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ZoneResponse> createZone(Authentication authentication, @RequestBody CreateZoneRequest request) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<ZoneResponse> createZone(@AuthenticationPrincipal User user, @RequestBody CreateZoneRequest request) {
 		ZoneResponse response = zoneService.createZone(user.getUserId(), request);
 		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/{zoneId}")
-	public ResponseEntity<ZoneResponse> getZoneById(Authentication authentication, @PathVariable Long zoneId) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<ZoneResponse> getZoneById(@AuthenticationPrincipal User user, @PathVariable Long zoneId) {
 		return ResponseEntity.ok(zoneService.getZoneById(user.getUserId(), zoneId));
 	}
 
 	@GetMapping("/hash/{zoneHash}")
-	public ResponseEntity<ZoneResponse> getZoneByHash(Authentication authentication, @PathVariable String zoneHash) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<ZoneResponse> getZoneByHash(@AuthenticationPrincipal User user, @PathVariable String zoneHash) {
 		return ResponseEntity.ok(zoneService.getZoneByHash(user.getUserId(), zoneHash));
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ZoneResponse>> getAllZones(Authentication authentication) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<List<ZoneResponse>> getAllZones(@AuthenticationPrincipal User user) {
 		return ResponseEntity.ok(zoneService.getAllZonesForUser(user.getUserId()));
 	}
 
 	@PutMapping("/{zoneId}")
-	public ResponseEntity<ZoneResponse> updateZone(Authentication authentication, @PathVariable Long zoneId, @RequestBody UpdateZoneRequest request) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<ZoneResponse> updateZone(@AuthenticationPrincipal User user, @PathVariable Long zoneId, @RequestBody UpdateZoneRequest request) {
 		return ResponseEntity.ok(zoneService.updateZone(user.getUserId(), zoneId, request));
 	}
 
 	@DeleteMapping("/{zoneId}")
-	public ResponseEntity<String> deleteZone(Authentication authentication, @PathVariable Long zoneId) {
-		User user = (User) authentication.getPrincipal();
+	public ResponseEntity<String> deleteZone(@AuthenticationPrincipal User user, @PathVariable Long zoneId) {
 		zoneService.deleteZone(user.getUserId(), zoneId);
 		return ResponseEntity.ok("Zone deleted successfully");
 	}
 }
-
-

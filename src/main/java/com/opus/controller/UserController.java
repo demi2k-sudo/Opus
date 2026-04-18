@@ -2,7 +2,7 @@ package com.opus.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,10 +46,8 @@ public class UserController
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<UserDetailsResponse> getLoggedInUser(Authentication authentication)
+	public ResponseEntity<UserDetailsResponse> getLoggedInUser(@AuthenticationPrincipal User user)
 	{
-		User user = (User) authentication.getPrincipal();
-
 		return ResponseEntity.ok(UserDetailsResponse.builder()
 			.username(user.getUsername())
 			.email(user.getEmail())
