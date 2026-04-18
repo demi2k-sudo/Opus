@@ -1,0 +1,23 @@
+meta {
+  name: Update Task
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/tasks/{{taskKey}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Build the task feature (Updated)",
+    "description": "Implement task CRUD operations and test with Bruno.",
+    "statusId": {{statusId}}
+  }
+}

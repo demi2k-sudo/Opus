@@ -1,0 +1,29 @@
+meta {
+  name: Create Priority
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/settings/priorities
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "URGENT",
+    "rank": 5,
+    "color": "red"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("priorityId", res.body.id);
+  }
+}

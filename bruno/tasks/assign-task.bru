@@ -1,0 +1,21 @@
+meta {
+  name: Assign Task
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/tasks/{{taskKey}}/assign
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "assignedTo": {{userId}}
+  }
+}

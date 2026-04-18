@@ -19,6 +19,7 @@ public class GlobalExceptionHandler
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<Object> handleGenericException(Exception ex) {
+        ex.printStackTrace();
 		return ResponseEntity
 			.status(HttpStatus.INTERNAL_SERVER_ERROR)
 			.body(new ErrorResponse(ErrorConstants.INTERNAL_SERVER_ERROR, "Something went wrong"));

@@ -1,0 +1,31 @@
+meta {
+  name: Create Status
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/settings/statuses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "TODO",
+    "displayOrder": 1,
+    "color": "gray",
+    "isInitial": true,
+    "isFinal": false
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("statusId", res.body.id);
+  }
+}

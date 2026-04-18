@@ -49,6 +49,9 @@ public class Zone
 	@Enumerated(EnumType.STRING)
 	private ZoneType zoneType;
 
+	@Column(nullable = false, length = 10, unique = true)
+	private String zoneCode;
+
 	@Column(nullable = true, length = 32)
 	private String zoneHash;
 

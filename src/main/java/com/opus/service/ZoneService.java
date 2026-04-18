@@ -41,6 +41,7 @@ public class ZoneService {
 			.zoneType(zoneType)
 			.zoneHash(zoneHash)
 			.userId(userId)
+			.zoneCode(request.getZoneCode().trim())
 			.build();
 
 		zone = zoneRepository.save(zone);

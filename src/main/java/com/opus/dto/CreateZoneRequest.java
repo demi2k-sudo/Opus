@@ -20,4 +20,7 @@ public class CreateZoneRequest {
 
 	@NotBlank(message = "Zone type is required")
 	private String zoneType;
+
+	@Size(max = 10, message = "Zone name must not exceed 10 characters")
+	private String zoneCode;
 }

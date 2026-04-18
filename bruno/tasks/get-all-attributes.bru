@@ -1,0 +1,15 @@
+meta {
+  name: Get All Attributes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/settings/attributes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

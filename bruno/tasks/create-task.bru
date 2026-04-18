@@ -1,0 +1,33 @@
+meta {
+  name: Create Task
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/tasks
+  body: json
+  auth: bearer
+}
+
+
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Build the task feature",
+    "description": "Implement task CRUD operations.",
+    "priorityId": {{priorityId}},
+    "typeId": {{typeId}},
+    "estimatedMinutes": 120
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("taskKey", res.body.taskKey);
+  }
+}
