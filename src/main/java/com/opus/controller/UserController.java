@@ -18,6 +18,8 @@ import com.opus.dto.UserDetailsResponse;
 import com.opus.model.User;
 import com.opus.service.UserService;
 
+import jakarta.validation.Valid;
+
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/users")
@@ -32,14 +34,14 @@ public class UserController
 	}
 
 	@PostMapping("/signup")
-	public ResponseEntity<String> signupUser(@RequestBody SignUpRequest signUpRequest) throws Exception
+	public ResponseEntity<String> signupUser(@RequestBody @Valid SignUpRequest signUpRequest) throws Exception
 	{
 		userService.signupUser(signUpRequest);
 		return ResponseEntity.ok("Signup Successful!");
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest)
+	public ResponseEntity<LoginResponse> loginUser(@RequestBody @Valid LoginRequest loginRequest)
 	{
 		LoginResponse loginResponse = userService.loginUser(loginRequest);
 		return ResponseEntity.ok(loginResponse);

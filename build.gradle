@@ -46,6 +46,10 @@ dependencies {
 
     // Hibernate Types for JSON handling
     implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
+
+    // Validation (Hibernate Validator)
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
 }
 
 tasks.named('test'){

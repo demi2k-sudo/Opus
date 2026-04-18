@@ -32,8 +32,6 @@ public class ZoneService {
 
 	@Transactional
 	public ZoneResponse createZone(Long userId, CreateZoneRequest request) {
-		validateCreateRequest(request);
-
 		Zone.ZoneType zoneType = parseZoneType(request.getZoneType());
 
 		String zoneHash = generateUniqueHash();
@@ -102,9 +100,6 @@ public class ZoneService {
 
 		if (request.getZoneName() != null) {
 			String name = request.getZoneName().trim();
-			if (name.isEmpty() || name.length() > 100) {
-				throw new InvalidZoneDataException("Zone name must be between 1 and 100 characters");
-			}
 			zone.setZoneName(name);
 		}
 
@@ -135,18 +130,6 @@ public class ZoneService {
 		zoneRepository.delete(zone);
 	}
 
-	private void validateCreateRequest(CreateZoneRequest request) {
-		if (request.getZoneName() == null || request.getZoneName().trim().isEmpty()) {
-			throw new InvalidZoneDataException("Zone name is required");
-		}
-		if (request.getZoneName().trim().length() > 100) {
-			throw new InvalidZoneDataException("Zone name must not exceed 100 characters");
-		}
-		if (request.getZoneType() == null || request.getZoneType().trim().isEmpty()) {
-			throw new InvalidZoneDataException("Zone type is required");
-		}
-	}
-
 	private Zone.ZoneType parseZoneType(String zoneType) {
 		try {
 			return Zone.ZoneType.valueOf(zoneType.trim().toUpperCase());
@@ -175,4 +158,3 @@ public class ZoneService {
 			.build();
 	}
 }
-

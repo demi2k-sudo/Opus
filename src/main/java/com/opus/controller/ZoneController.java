@@ -5,6 +5,7 @@ import com.opus.dto.UpdateZoneRequest;
 import com.opus.dto.ZoneResponse;
 import com.opus.model.User;
 import com.opus.service.ZoneService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +26,7 @@ public class ZoneController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ZoneResponse> createZone(@AuthenticationPrincipal User user, @RequestBody CreateZoneRequest request) {
+	public ResponseEntity<ZoneResponse> createZone(@AuthenticationPrincipal User user, @RequestBody @Valid CreateZoneRequest request) {
 		ZoneResponse response = zoneService.createZone(user.getUserId(), request);
 		return ResponseEntity.ok(response);
 	}
@@ -46,7 +47,7 @@ public class ZoneController {
 	}
 
 	@PutMapping("/{zoneId}")
-	public ResponseEntity<ZoneResponse> updateZone(@AuthenticationPrincipal User user, @PathVariable Long zoneId, @RequestBody UpdateZoneRequest request) {
+	public ResponseEntity<ZoneResponse> updateZone(@AuthenticationPrincipal User user, @PathVariable Long zoneId, @RequestBody @Valid UpdateZoneRequest request) {
 		return ResponseEntity.ok(zoneService.updateZone(user.getUserId(), zoneId, request));
 	}
 
