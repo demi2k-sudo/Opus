@@ -1,0 +1,16 @@
+meta {
+  name: Get Zone By Hash
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/zones/hash/{{zoneHash}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

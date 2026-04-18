@@ -1,0 +1,16 @@
+meta {
+  name: Get Zone By ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/zones/{{zoneId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

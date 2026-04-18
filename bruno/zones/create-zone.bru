@@ -1,0 +1,30 @@
+meta {
+  name: Create Zone
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/zones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "zoneName": "My Zone",
+    "zoneType": "PRIVATE"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("zoneId", res.body.zoneId);
+    bru.setEnvVar("zoneHash", res.body.zoneHash);
+  }
+}
+

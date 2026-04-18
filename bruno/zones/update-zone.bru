@@ -1,0 +1,23 @@
+meta {
+  name: Update Zone
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/zones/{{zoneId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "zoneName": "Updated Zone Name",
+    "zoneType": "PUBLIC"
+  }
+}
+
