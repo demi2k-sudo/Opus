@@ -12,4 +12,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByZone_ZoneId(Long zoneId);
     Optional<Task> findByTaskKeyAndZone_ZoneId(String taskKey, Long zoneId);
     long countByZone_ZoneId(Long zoneId);
+    boolean existsByStatus_StatusId(Long statusId);
 }

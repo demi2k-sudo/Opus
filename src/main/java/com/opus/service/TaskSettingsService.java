@@ -10,6 +10,8 @@ import com.opus.repository.TaskPriorityRepository;
 import com.opus.repository.TaskStatusRepository;
 import com.opus.repository.TaskTypeRepository;
 import com.opus.repository.ZoneRepository;
+import com.opus.repository.TaskRepository;
+import com.opus.dto.ReorderRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class TaskSettingsService {
     private final TaskTypeRepository typeRepository;
     private final TaskStatusRepository statusRepository;
     private final ZoneRepository zoneRepository;
+    private final TaskRepository taskRepository;
 
     @Transactional(readOnly = true)
     public List<TaskAttributeResponse> getPriorities(Long zoneId) {
@@ -107,12 +110,21 @@ public class TaskSettingsService {
     @Transactional
     public TaskAttributeResponse createStatus(Long zoneId, TaskAttributeRequest req) {
         Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new RuntimeException("Zone not found"));
+        boolean isInitial = req.getIsInitial() != null ? req.getIsInitial() : false;
+        if (isInitial) {
+            statusRepository.findByZone_ZoneIdAndIsInitialTrue(zoneId)
+                    .ifPresent(oldInitial -> {
+                        oldInitial.setIsInitial(false);
+                        statusRepository.save(oldInitial);
+                    });
+        }
+
         TaskStatus status = TaskStatus.builder()
                 .zone(zone)
                 .statusName(req.getName())
                 .displayOrder(req.getDisplayOrder())
                 .color(req.getColor())
-                .isInitial(req.getIsInitial() != null ? req.getIsInitial() : false)
+                .isInitial(isInitial)
                 .isFinal(req.getIsFinal() != null ? req.getIsFinal() : false)
                 .metadata(req.getMetadata())
                 .build();
@@ -126,5 +138,67 @@ public class TaskSettingsService {
                 .isFinal(status.getIsFinal())
                 .metadata(status.getMetadata())
                 .build();
+    }
+    @Transactional
+    public TaskAttributeResponse updateStatus(Long zoneId, Long statusId, TaskAttributeRequest req) {
+        TaskStatus status = statusRepository.findByStatusIdAndZone_ZoneId(statusId, zoneId)
+                .orElseThrow(() -> new RuntimeException("Status not found"));
+
+        boolean isInitial = req.getIsInitial() != null ? req.getIsInitial() : false;
+        if (isInitial && !Boolean.TRUE.equals(status.getIsInitial())) {
+            statusRepository.findByZone_ZoneIdAndIsInitialTrue(zoneId)
+                    .ifPresent(oldInitial -> {
+                        oldInitial.setIsInitial(false);
+                        statusRepository.save(oldInitial);
+                    });
+        }
+
+        status.setStatusName(req.getName());
+        status.setColor(req.getColor());
+        status.setIsInitial(isInitial);
+        status.setIsFinal(req.getIsFinal() != null ? req.getIsFinal() : false);
+        if (req.getMetadata() != null) {
+            status.setMetadata(req.getMetadata());
+        }
+
+        status = statusRepository.save(status);
+        return TaskAttributeResponse.builder()
+                .id(status.getStatusId())
+                .name(status.getStatusName())
+                .displayOrder(status.getDisplayOrder())
+                .color(status.getColor())
+                .isInitial(status.getIsInitial())
+                .isFinal(status.getIsFinal())
+                .metadata(status.getMetadata())
+                .build();
+    }
+
+    @Transactional
+    public void deleteStatus(Long zoneId, Long statusId) {
+        TaskStatus status = statusRepository.findByStatusIdAndZone_ZoneId(statusId, zoneId)
+                .orElseThrow(() -> new RuntimeException("Status not found"));
+
+        if (taskRepository.existsByStatus_StatusId(statusId)) {
+            throw new RuntimeException("Cannot delete status: it is currently used by one or more tasks.");
+        }
+
+        statusRepository.delete(status);
+    }
+
+    @Transactional
+    public void reorderStatuses(Long zoneId, ReorderRequest req) {
+        List<TaskStatus> statuses = statusRepository.findByZone_ZoneIdOrderByDisplayOrderAsc(zoneId);
+        List<Long> orderedIds = req.getOrderedIds();
+        
+        for (int i = 0; i < orderedIds.size(); i++) {
+            Long currentId = orderedIds.get(i);
+            int displayOrder = i + 1;
+            statuses.stream()
+                    .filter(s -> s.getStatusId().equals(currentId))
+                    .findFirst()
+                    .ifPresent(s -> s.setDisplayOrder(displayOrder));
+        }
+        
+        statusRepository.saveAll(statuses);
     }
 }

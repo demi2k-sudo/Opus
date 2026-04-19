@@ -1,0 +1,24 @@
+meta {
+  name: Reorder Statuses
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/settings/statuses/reorder
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "orderedIds": [
+      2,
+      1
+    ]
+  }
+}

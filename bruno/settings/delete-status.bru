@@ -1,0 +1,15 @@
+meta {
+  name: Delete Status
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/zones/{{zoneId}}/settings/statuses/{{statusId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
