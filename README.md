@@ -54,6 +54,8 @@ src/main/java/com/opus/
 │   ├── ZoneResponse.java
 │   ├── CreateTaskRequest.java
 │   ├── UpdateTaskRequest.java
+│   ├── AssignTaskRequest.java
+│   ├── ReorderRequest.java
 │   ├── TaskResponse.java
 │   ├── TaskAttributeRequest.java
 │   └── TaskAttributeResponse.java
@@ -70,6 +72,8 @@ src/main/java/com/opus/
 │   ├── ZoneRepository.java
 │   ├── UserZoneMapRepository.java
 │   ├── TaskRepository.java
+│   ├── TaskPriorityRepository.java
+│   ├── TaskTypeRepository.java
 │   └── TaskStatusRepository.java
 ├── service/                       # Business logic
 │   ├── UserService.java
@@ -238,8 +242,14 @@ Client (Bruno / Frontend)
 | `priority_id` | BIGINT | NOT NULL, FK | Reference to `task_priority_table` |
 | `type_id` | BIGINT | NOT NULL, FK | Reference to `task_type_table` |
 | `created_by` | BIGINT | NOT NULL, FK | Reference to `user_table` |
+| `reported_by` | BIGINT | FK | Reference to `user_table` |
 | `assigned_to` | BIGINT | FK | Reference to `user_table` |
+| `parent_task_id` | BIGINT | FK | Reference to `task_table` (sub-tasks) |
+| `due_at` | TIMESTAMP | | Task due date |
+| `start_at` | TIMESTAMP | | Task start date |
+| `completed_at` | TIMESTAMP | | Task completion date |
 | `estimated_minutes` | INTEGER | | Time estimation |
+| `actual_minutes` | INTEGER | | Actual time spent |
 | `metadata` | JSONB | | Custom task fields |
 | `deleted_at` | TIMESTAMP | | Soft delete timestamp |
 
@@ -385,7 +395,7 @@ Client (Bruno / Frontend)
 | `GET` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Get task by key (e.g., ZNE-1) |
 | `PUT` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Update a task |
 | `PUT` | `/api/zones/{zoneId}/tasks/{taskKey}/assign` | ✅ | Assign a task |
-| `DELETE` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Soft delete a task |
+| `DELETE` | `/api/zones/{zoneId}/tasks/{taskKey}` | ✅ | Soft delete a task (sets `deleted_at`) |
 
 ### Task Settings Endpoints — `/api/zones/{zoneId}/settings`
 
@@ -395,11 +405,38 @@ Client (Bruno / Frontend)
 | `POST` | `/api/zones/{zoneId}/settings/priorities` | ✅ | Create a custom priority |
 | `POST` | `/api/zones/{zoneId}/settings/types` | ✅ | Create a custom type |
 | `POST` | `/api/zones/{zoneId}/settings/statuses` | ✅ | Create a custom status |
+| `PUT` | `/api/zones/{zoneId}/settings/statuses/{statusId}` | ✅ | Update a status |
+| `DELETE` | `/api/zones/{zoneId}/settings/statuses/{statusId}` | ✅ | Delete a status |
+| `PUT` | `/api/zones/{zoneId}/settings/statuses/reorder` | ✅ | Reorder statuses by ordered ID list |
 | `GET` | `/api/tasks/attributes/defaults` | ✅ | Get unpersisted default suggestions |
 
----
+#### PUT `/api/zones/{zoneId}/tasks/{taskKey}/assign`
+```json
+// Request
+{
+  "assignedTo": 42
+}
+```
 
-## Security Design
+#### PUT `/api/zones/{zoneId}/settings/statuses/reorder`
+```json
+// Request
+{
+  "orderedIds": [3, 1, 2]
+}
+```
+
+#### DELETE `/api/zones/{zoneId}/tasks/{taskKey}`
+```
+// Response: 204 No Content
+```
+
+#### DELETE `/api/zones/{zoneId}/settings/statuses/{statusId}`
+```
+// Response: 204 No Content
+```
+
+---
 
 ```
 Signup/Login  ──────────────────────────────────────────► No auth needed
